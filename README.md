@@ -9,13 +9,16 @@
 - 自动生成 VTT / SRT 字幕
 - 声音试听
 - 深色模式
-- 完全免费、无需 API Key、无后端
+- 声音搜索（跨语言按名字/地区/方言）、音调与音量调节
+- 长文本自动分段合成并拼接，字幕时间轴连续
+- 设置与草稿自动保存在本机浏览器
+- 完全免费、无需 API Key
 
 ## 技术说明
 
-- 浏览器端通过 WebSocket 直接连接微软 Edge TTS 服务（`speech.platform.bing.com`）
-- 无需服务器，适合 Cloudflare Pages / GitHub Pages / 任意静态托管
-- 推荐使用 Microsoft Edge 浏览器以获得最佳兼容性
+- 前端调用同源 `/api/tts`（Cloudflare Pages Function，`functions/api/tts.js`），由 Function 通过 WebSocket 连接微软 Edge TTS（`speech.platform.bing.com`）。浏览器无法设置上游要求的 Origin / Cookie / User-Agent，所以不能直连。
+- 使用 Sec-MS-GEC v2 令牌（`Sec-MS-GEC-Version: 2-<Chromium 版本>`）。若微软再次升级版本导致 403，可在 Cloudflare 环境变量 `EDGE_TTS_CHROMIUM_VERSION` 中更新版本号，算法参考 rany2/edge-tts 的 `drm.py`。
+- 需要部署到 Cloudflare Pages（含 Functions）；纯静态托管（如 GitHub Pages）无法使用。
 
 ## 部署到 Cloudflare Pages
 
@@ -52,10 +55,7 @@ npx wrangler pages deploy . --project-name=edge-tts-clone
 ## 本地预览
 
 ```bash
-# 任意静态服务器即可，例如：
-npx serve .
-# 或
-python -m http.server 8080
+npx wrangler pages dev .   # 含 /api/tts Function
 ```
 
 打开 http://localhost:8080 即可使用。
