@@ -1,7 +1,9 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// api/tts.js
+// .wrangler/tmp/pages-rpPLkE/functionsWorker-0.6353353692448014.mjs
+var __defProp2 = Object.defineProperty;
+var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
 var TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
 var BASE_URL = "speech.platform.bing.com/consumer/speech/synthesize/readaloud";
 var UPSTREAM_ORIGIN = "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold";
@@ -49,10 +51,12 @@ async function onRequestPost(context) {
   }
 }
 __name(onRequestPost, "onRequestPost");
+__name2(onRequestPost, "onRequestPost");
 function normalizeProsodyValue(value, fallback, pattern) {
   return typeof value === "string" && pattern.test(value) ? value : fallback;
 }
 __name(normalizeProsodyValue, "normalizeProsodyValue");
+__name2(normalizeProsodyValue, "normalizeProsodyValue");
 async function synthesize({ text, voice, rate, volume, pitch, chromiumVersion }) {
   const connectionId = crypto.randomUUID().replaceAll("-", "").toUpperCase();
   const secMsGec = generateSecMsGec();
@@ -91,7 +95,7 @@ async function synthesize({ text, voice, rate, volume, pitch, chromiumVersion })
   });
   const timeout = setTimeout(() => fail(new Error("\u4E0A\u6E38\u8BED\u97F3\u670D\u52A1\u54CD\u5E94\u8D85\u65F6\u3002")), REQUEST_TIMEOUT_MS);
   let settled = false;
-  const settle = /* @__PURE__ */ __name((callback, value) => {
+  const settle = /* @__PURE__ */ __name2((callback, value) => {
     if (settled) return;
     settled = true;
     clearTimeout(timeout);
@@ -141,6 +145,7 @@ async function synthesize({ text, voice, rate, volume, pitch, chromiumVersion })
   return { audio: concatBytes(audioChunks), subtitle };
 }
 __name(synthesize, "synthesize");
+__name2(synthesize, "synthesize");
 function createSpeechConfig() {
   return [
     `X-Timestamp:${edgeTimestamp()}`,
@@ -160,6 +165,7 @@ function createSpeechConfig() {
   ].join("\r\n");
 }
 __name(createSpeechConfig, "createSpeechConfig");
+__name2(createSpeechConfig, "createSpeechConfig");
 function createSsml({ text, voice, rate, volume, pitch }) {
   return [
     `X-RequestId:${crypto.randomUUID().replaceAll("-", "").toUpperCase()}`,
@@ -171,6 +177,7 @@ function createSsml({ text, voice, rate, volume, pitch }) {
   ].join("\r\n");
 }
 __name(createSsml, "createSsml");
+__name2(createSsml, "createSsml");
 function splitTextFrame(frame) {
   const separator = "\r\n\r\n";
   const index = frame.indexOf(separator);
@@ -180,6 +187,7 @@ function splitTextFrame(frame) {
   return { path, body };
 }
 __name(splitTextFrame, "splitTextFrame");
+__name2(splitTextFrame, "splitTextFrame");
 function extractAudioFrame(frame) {
   if (frame.byteLength < 2) return null;
   const headerLength = frame[0] << 8 | frame[1];
@@ -191,6 +199,7 @@ function extractAudioFrame(frame) {
   return frame.slice(headerLength + 2);
 }
 __name(extractAudioFrame, "extractAudioFrame");
+__name2(extractAudioFrame, "extractAudioFrame");
 var WIN_EPOCH = 11644473600;
 var SHA256_INITIAL = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225];
 var SHA256_STATE = [4255104674, 2435071207, 3192492180, 3442351626, 1811967817, 79508907, 4272990180, 66059218];
@@ -299,13 +308,13 @@ var CS64_COEFFICIENTS = [
 var CS64_FACTOR = 2190031155;
 var CS64_ADJUSTMENT0 = 4076407578;
 var CS64_ADJUSTMENT1 = 186253312;
-var u32 = /* @__PURE__ */ __name((value) => value >>> 0, "u32");
-var add = /* @__PURE__ */ __name((...values) => values.reduce((sum, value) => sum + value >>> 0, 0), "add");
-var mul = /* @__PURE__ */ __name((a, b) => Math.imul(a, b) >>> 0, "mul");
-var rotr = /* @__PURE__ */ __name((value, bits) => (value >>> bits | value << 32 - bits) >>> 0, "rotr");
-var rol16 = /* @__PURE__ */ __name((value) => rotr(value, 16), "rol16");
-var sigma0 = /* @__PURE__ */ __name((x) => (rotr(x, 7) ^ rotr(x, 18) ^ x >>> 3) >>> 0, "sigma0");
-var sigma1 = /* @__PURE__ */ __name((x) => (rotr(x, 17) ^ rotr(x, 19) ^ x >>> 10) >>> 0, "sigma1");
+var u32 = /* @__PURE__ */ __name2((value) => value >>> 0, "u32");
+var add = /* @__PURE__ */ __name2((...values) => values.reduce((sum, value) => sum + value >>> 0, 0), "add");
+var mul = /* @__PURE__ */ __name2((a, b) => Math.imul(a, b) >>> 0, "mul");
+var rotr = /* @__PURE__ */ __name2((value, bits) => (value >>> bits | value << 32 - bits) >>> 0, "rotr");
+var rol16 = /* @__PURE__ */ __name2((value) => rotr(value, 16), "rol16");
+var sigma0 = /* @__PURE__ */ __name2((x) => (rotr(x, 7) ^ rotr(x, 18) ^ x >>> 3) >>> 0, "sigma0");
+var sigma1 = /* @__PURE__ */ __name2((x) => (rotr(x, 17) ^ rotr(x, 19) ^ x >>> 10) >>> 0, "sigma1");
 function sha256Rounds(state, words, firstRound = 0) {
   let [a, b, c, d, e, f, g, h] = state;
   const k = firstRound === 14 ? SHA256_BLOCK_K : SHA256_K;
@@ -328,18 +337,21 @@ function sha256Rounds(state, words, firstRound = 0) {
   return [a, b, c, d, e, f, g, h];
 }
 __name(sha256Rounds, "sha256Rounds");
+__name2(sha256Rounds, "sha256Rounds");
 function expandSchedule(words, firstWord = 16) {
   for (let i = firstWord; i < 64; i += 1) {
     words.push(add(sigma1(words[i - 2]), words[i - 7], sigma0(words[i - 15]), words[i - 16]));
   }
 }
 __name(expandSchedule, "expandSchedule");
+__name2(expandSchedule, "expandSchedule");
 function readU32BE(bytes, offset, length = 4) {
   let value = 0;
   for (let i = 0; i < length; i += 1) value = value * 256 + (bytes[offset + i] ?? 0);
   return value >>> 0;
 }
 __name(readU32BE, "readU32BE");
+__name2(readU32BE, "readU32BE");
 function sha256Init(data7) {
   const words = new Array(14).fill(0);
   words.push(readU32BE(data7, 0, 3));
@@ -357,6 +369,7 @@ function sha256Init(data7) {
   return SHA256_INITIAL.map((x, i) => add(x, working[i]));
 }
 __name(sha256Init, "sha256Init");
+__name2(sha256Init, "sha256Init");
 function sha256Digest(data) {
   if (data.length < 7) throw new Error("Token salt must contain at least seven bytes");
   const length = 57 + data.length;
@@ -381,6 +394,7 @@ function sha256Digest(data) {
   return out;
 }
 __name(sha256Digest, "sha256Digest");
+__name2(sha256Digest, "sha256Digest");
 function wordsLe4Even(bytes) {
   const paddedLength = Math.ceil(bytes.length / 4) * 4;
   const padded = new Uint8Array(paddedLength);
@@ -392,6 +406,7 @@ function wordsLe4Even(bytes) {
   return words;
 }
 __name(wordsLe4Even, "wordsLe4Even");
+__name2(wordsLe4Even, "wordsLe4Even");
 function cs64Digest(data, digest) {
   const digestView = new DataView(digest.buffer, digest.byteOffset, digest.byteLength);
   const keyA = (digestView.getUint32(0, true) | 1) >>> 0;
@@ -440,7 +455,8 @@ function cs64Digest(data, digest) {
   return [u32(swapLast ^ state), u32(swapAcc ^ acc)];
 }
 __name(cs64Digest, "cs64Digest");
-var toHex = /* @__PURE__ */ __name((bytes) => [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase(), "toHex");
+__name2(cs64Digest, "cs64Digest");
+var toHex = /* @__PURE__ */ __name2((bytes) => [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase(), "toHex");
 function generateSecMsGec(unixSeconds = Date.now() / 1e3) {
   let seconds = Math.floor(unixSeconds) + WIN_EPOCH;
   seconds -= seconds % 300;
@@ -455,10 +471,12 @@ function generateSecMsGec(unixSeconds = Date.now() / 1e3) {
   return `${toHex(csBytes)}-${toHex(digest)}`;
 }
 __name(generateSecMsGec, "generateSecMsGec");
+__name2(generateSecMsGec, "generateSecMsGec");
 function edgeTimestamp() {
   return (/* @__PURE__ */ new Date()).toISOString().replace(/[:-]|\.\d{3}/g, "");
 }
 __name(edgeTimestamp, "edgeTimestamp");
+__name2(edgeTimestamp, "edgeTimestamp");
 function escapeXml(value) {
   return value.replace(/[<>&'"]/g, (character) => ({
     "<": "&lt;",
@@ -469,11 +487,13 @@ function escapeXml(value) {
   })[character]);
 }
 __name(escapeXml, "escapeXml");
+__name2(escapeXml, "escapeXml");
 function randomHex(byteCount) {
   const bytes = crypto.getRandomValues(new Uint8Array(byteCount));
   return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 __name(randomHex, "randomHex");
+__name2(randomHex, "randomHex");
 function concatBytes(chunks) {
   const length = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
   const output = new Uint8Array(length);
@@ -485,6 +505,7 @@ function concatBytes(chunks) {
   return output;
 }
 __name(concatBytes, "concatBytes");
+__name2(concatBytes, "concatBytes");
 function bytesToBase64(bytes) {
   const chunkSize = 32768;
   let binary = "";
@@ -494,6 +515,7 @@ function bytesToBase64(bytes) {
   return btoa(binary);
 }
 __name(bytesToBase64, "bytesToBase64");
+__name2(bytesToBase64, "bytesToBase64");
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -501,8 +523,7 @@ function json(body, status = 200) {
   });
 }
 __name(json, "json");
-
-// ../.wrangler/tmp/pages-SdUSTH/functionsRoutes-0.05280299426391544.mjs
+__name2(json, "json");
 var routes = [
   {
     routePath: "/api/tts",
@@ -512,8 +533,6 @@ var routes = [
     modules: [onRequestPost]
   }
 ];
-
-// ../../../../home/sandbox/.npm/_npx/32026684e21afda6/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -598,6 +617,7 @@ function lexer(str) {
   return tokens;
 }
 __name(lexer, "lexer");
+__name2(lexer, "lexer");
 function parse(str, options) {
   if (options === void 0) {
     options = {};
@@ -608,18 +628,18 @@ function parse(str, options) {
   var key = 0;
   var i = 0;
   var path = "";
-  var tryConsume = /* @__PURE__ */ __name(function(type) {
+  var tryConsume = /* @__PURE__ */ __name2(function(type) {
     if (i < tokens.length && tokens[i].type === type)
       return tokens[i++].value;
   }, "tryConsume");
-  var mustConsume = /* @__PURE__ */ __name(function(type) {
+  var mustConsume = /* @__PURE__ */ __name2(function(type) {
     var value2 = tryConsume(type);
     if (value2 !== void 0)
       return value2;
     var _a2 = tokens[i], nextType = _a2.type, index = _a2.index;
     throw new TypeError("Unexpected ".concat(nextType, " at ").concat(index, ", expected ").concat(type));
   }, "mustConsume");
-  var consumeText = /* @__PURE__ */ __name(function() {
+  var consumeText = /* @__PURE__ */ __name2(function() {
     var result2 = "";
     var value2;
     while (value2 = tryConsume("CHAR") || tryConsume("ESCAPED_CHAR")) {
@@ -627,7 +647,7 @@ function parse(str, options) {
     }
     return result2;
   }, "consumeText");
-  var isSafe = /* @__PURE__ */ __name(function(value2) {
+  var isSafe = /* @__PURE__ */ __name2(function(value2) {
     for (var _i = 0, delimiter_1 = delimiter; _i < delimiter_1.length; _i++) {
       var char2 = delimiter_1[_i];
       if (value2.indexOf(char2) > -1)
@@ -635,7 +655,7 @@ function parse(str, options) {
     }
     return false;
   }, "isSafe");
-  var safePattern = /* @__PURE__ */ __name(function(prefix2) {
+  var safePattern = /* @__PURE__ */ __name2(function(prefix2) {
     var prev = result[result.length - 1];
     var prevText = prefix2 || (prev && typeof prev === "string" ? prev : "");
     if (prev && !prevText) {
@@ -698,12 +718,14 @@ function parse(str, options) {
   return result;
 }
 __name(parse, "parse");
+__name2(parse, "parse");
 function match(str, options) {
   var keys = [];
   var re = pathToRegexp(str, keys, options);
   return regexpToFunction(re, keys, options);
 }
 __name(match, "match");
+__name2(match, "match");
 function regexpToFunction(re, keys, options) {
   if (options === void 0) {
     options = {};
@@ -717,7 +739,7 @@ function regexpToFunction(re, keys, options) {
       return false;
     var path = m[0], index = m.index;
     var params = /* @__PURE__ */ Object.create(null);
-    var _loop_1 = /* @__PURE__ */ __name(function(i2) {
+    var _loop_1 = /* @__PURE__ */ __name2(function(i2) {
       if (m[i2] === void 0)
         return "continue";
       var key = keys[i2 - 1];
@@ -736,14 +758,17 @@ function regexpToFunction(re, keys, options) {
   };
 }
 __name(regexpToFunction, "regexpToFunction");
+__name2(regexpToFunction, "regexpToFunction");
 function escapeString(str) {
   return str.replace(/([.+*?=^!:${}()[\]|/\\])/g, "\\$1");
 }
 __name(escapeString, "escapeString");
+__name2(escapeString, "escapeString");
 function flags(options) {
   return options && options.sensitive ? "" : "i";
 }
 __name(flags, "flags");
+__name2(flags, "flags");
 function regexpToRegexp(path, keys) {
   if (!keys)
     return path;
@@ -764,6 +789,7 @@ function regexpToRegexp(path, keys) {
   return path;
 }
 __name(regexpToRegexp, "regexpToRegexp");
+__name2(regexpToRegexp, "regexpToRegexp");
 function arrayToRegexp(paths, keys, options) {
   var parts = paths.map(function(path) {
     return pathToRegexp(path, keys, options).source;
@@ -771,10 +797,12 @@ function arrayToRegexp(paths, keys, options) {
   return new RegExp("(?:".concat(parts.join("|"), ")"), flags(options));
 }
 __name(arrayToRegexp, "arrayToRegexp");
+__name2(arrayToRegexp, "arrayToRegexp");
 function stringToRegexp(path, keys, options) {
   return tokensToRegexp(parse(path, options), keys, options);
 }
 __name(stringToRegexp, "stringToRegexp");
+__name2(stringToRegexp, "stringToRegexp");
 function tokensToRegexp(tokens, keys, options) {
   if (options === void 0) {
     options = {};
@@ -830,6 +858,7 @@ function tokensToRegexp(tokens, keys, options) {
   return new RegExp(route, flags(options));
 }
 __name(tokensToRegexp, "tokensToRegexp");
+__name2(tokensToRegexp, "tokensToRegexp");
 function pathToRegexp(path, keys, options) {
   if (path instanceof RegExp)
     return regexpToRegexp(path, keys);
@@ -838,8 +867,7 @@ function pathToRegexp(path, keys, options) {
   return stringToRegexp(path, keys, options);
 }
 __name(pathToRegexp, "pathToRegexp");
-
-// ../../../../home/sandbox/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/pages-template-worker.ts
+__name2(pathToRegexp, "pathToRegexp");
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function getOriginalPathPrefix(requestPath, normalizedPrefix) {
   let end = 0;
@@ -854,6 +882,7 @@ function getOriginalPathPrefix(requestPath, normalizedPrefix) {
   return requestPath.slice(0, end);
 }
 __name(getOriginalPathPrefix, "getOriginalPathPrefix");
+__name2(getOriginalPathPrefix, "getOriginalPathPrefix");
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
   const normalizedRequestPath = requestPath.replace(/\/+/g, "/");
@@ -906,13 +935,14 @@ function* executeRequest(request) {
   }
 }
 __name(executeRequest, "executeRequest");
+__name2(executeRequest, "executeRequest");
 var pages_template_worker_default = {
   async fetch(originalRequest, env, workerContext) {
     let request = originalRequest;
     const handlerIterator = executeRequest(request);
     let data = {};
     let isFailOpen = false;
-    const next = /* @__PURE__ */ __name(async (input, init) => {
+    const next = /* @__PURE__ */ __name2(async (input, init) => {
       if (input !== void 0) {
         let url = input;
         if (typeof input === "string") {
@@ -939,7 +969,7 @@ var pages_template_worker_default = {
           },
           env,
           waitUntil: workerContext.waitUntil.bind(workerContext),
-          passThroughOnException: /* @__PURE__ */ __name(() => {
+          passThroughOnException: /* @__PURE__ */ __name2(() => {
             isFailOpen = true;
           }, "passThroughOnException")
         };
@@ -967,16 +997,14 @@ var pages_template_worker_default = {
     }
   }
 };
-var cloneResponse = /* @__PURE__ */ __name((response) => (
+var cloneResponse = /* @__PURE__ */ __name2((response) => (
   // https://fetch.spec.whatwg.org/#null-body-status
   new Response(
     [101, 204, 205, 304].includes(response.status) ? null : response.body,
     response
   )
 ), "cloneResponse");
-
-// ../../../../home/sandbox/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
-var drainBody = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
+var drainBody = /* @__PURE__ */ __name2(async (request, env, _ctx, middlewareCtx) => {
   try {
     return await middlewareCtx.next(request, env);
   } finally {
@@ -992,8 +1020,6 @@ var drainBody = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
   }
 }, "drainBody");
 var middleware_ensure_req_body_drained_default = drainBody;
-
-// ../../../../home/sandbox/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts
 function reduceError(e) {
   return {
     name: e?.name,
@@ -1003,7 +1029,8 @@ function reduceError(e) {
   };
 }
 __name(reduceError, "reduceError");
-var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
+__name2(reduceError, "reduceError");
+var jsonError = /* @__PURE__ */ __name2(async (request, env, _ctx, middlewareCtx) => {
   try {
     return await middlewareCtx.next(request, env);
   } catch (e) {
@@ -1021,20 +1048,17 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
   }
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
-
-// ../.wrangler/tmp/bundle-KQY7eK/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
 ];
 var middleware_insertion_facade_default = pages_template_worker_default;
-
-// ../../../../home/sandbox/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/common.ts
 var __facade_middleware__ = [];
 function __facade_register__(...args) {
   __facade_middleware__.push(...args.flat());
 }
 __name(__facade_register__, "__facade_register__");
+__name2(__facade_register__, "__facade_register__");
 function __facade_invokeChain__(request, env, ctx, dispatch, middlewareChain) {
   const [head, ...tail] = middlewareChain;
   const middlewareCtx = {
@@ -1046,6 +1070,7 @@ function __facade_invokeChain__(request, env, ctx, dispatch, middlewareChain) {
   return head(request, env, ctx, middlewareCtx);
 }
 __name(__facade_invokeChain__, "__facade_invokeChain__");
+__name2(__facade_invokeChain__, "__facade_invokeChain__");
 function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
   return __facade_invokeChain__(request, env, ctx, dispatch, [
     ...__facade_middleware__,
@@ -1053,9 +1078,11 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
   ]);
 }
 __name(__facade_invoke__, "__facade_invoke__");
-
-// ../.wrangler/tmp/bundle-KQY7eK/middleware-loader.entry.ts
+__name2(__facade_invoke__, "__facade_invoke__");
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
+  static {
+    __name(this, "___Facade_ScheduledController__");
+  }
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
     this.cron = cron;
@@ -1064,7 +1091,7 @@ var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   scheduledTime;
   cron;
   static {
-    __name(this, "__Facade_ScheduledController__");
+    __name2(this, "__Facade_ScheduledController__");
   }
   #noRetry;
   noRetry() {
@@ -1081,7 +1108,7 @@ function wrapExportedHandler(worker) {
   for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__) {
     __facade_register__(middleware);
   }
-  const fetchDispatcher = /* @__PURE__ */ __name(function(request, env, ctx) {
+  const fetchDispatcher = /* @__PURE__ */ __name2(function(request, env, ctx) {
     if (worker.fetch === void 0) {
       throw new Error("Handler does not export a fetch() function.");
     }
@@ -1090,7 +1117,7 @@ function wrapExportedHandler(worker) {
   return {
     ...worker,
     fetch(request, env, ctx) {
-      const dispatcher = /* @__PURE__ */ __name(function(type, init) {
+      const dispatcher = /* @__PURE__ */ __name2(function(type, init) {
         if (type === "scheduled" && worker.scheduled !== void 0) {
           const controller = new __Facade_ScheduledController__(
             Date.now(),
@@ -1106,6 +1133,7 @@ function wrapExportedHandler(worker) {
   };
 }
 __name(wrapExportedHandler, "wrapExportedHandler");
+__name2(wrapExportedHandler, "wrapExportedHandler");
 function wrapWorkerEntrypoint(klass) {
   if (__INTERNAL_WRANGLER_MIDDLEWARE__ === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__.length === 0) {
     return klass;
@@ -1114,7 +1142,7 @@ function wrapWorkerEntrypoint(klass) {
     __facade_register__(middleware);
   }
   return class extends klass {
-    #fetchDispatcher = /* @__PURE__ */ __name((request, env, ctx) => {
+    #fetchDispatcher = /* @__PURE__ */ __name2((request, env, ctx) => {
       this.env = env;
       this.ctx = ctx;
       if (super.fetch === void 0) {
@@ -1122,7 +1150,7 @@ function wrapWorkerEntrypoint(klass) {
       }
       return super.fetch(request);
     }, "#fetchDispatcher");
-    #dispatcher = /* @__PURE__ */ __name((type, init) => {
+    #dispatcher = /* @__PURE__ */ __name2((type, init) => {
       if (type === "scheduled" && super.scheduled !== void 0) {
         const controller = new __Facade_ScheduledController__(
           Date.now(),
@@ -1145,6 +1173,7 @@ function wrapWorkerEntrypoint(klass) {
   };
 }
 __name(wrapWorkerEntrypoint, "wrapWorkerEntrypoint");
+__name2(wrapWorkerEntrypoint, "wrapWorkerEntrypoint");
 var WRAPPED_ENTRY;
 if (typeof middleware_insertion_facade_default === "object") {
   WRAPPED_ENTRY = wrapExportedHandler(middleware_insertion_facade_default);
@@ -1152,8 +1181,186 @@ if (typeof middleware_insertion_facade_default === "object") {
   WRAPPED_ENTRY = wrapWorkerEntrypoint(middleware_insertion_facade_default);
 }
 var middleware_loader_entry_default = WRAPPED_ENTRY;
-export {
-  __INTERNAL_WRANGLER_MIDDLEWARE__,
-  middleware_loader_entry_default as default
+
+// ../../../home/sandbox/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
+var drainBody2 = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
+  try {
+    return await middlewareCtx.next(request, env);
+  } finally {
+    try {
+      if (request.body !== null && !request.bodyUsed) {
+        const reader = request.body.getReader();
+        while (!(await reader.read()).done) {
+        }
+      }
+    } catch (e) {
+      console.error("Failed to drain the unused request body.", e);
+    }
+  }
+}, "drainBody");
+var middleware_ensure_req_body_drained_default2 = drainBody2;
+
+// ../../../home/sandbox/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/middleware-miniflare3-json-error.ts
+function reduceError2(e) {
+  return {
+    name: e?.name,
+    message: e?.message ?? String(e),
+    stack: e?.stack,
+    cause: e?.cause === void 0 ? void 0 : reduceError2(e.cause)
+  };
+}
+__name(reduceError2, "reduceError");
+var jsonError2 = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx) => {
+  try {
+    return await middlewareCtx.next(request, env);
+  } catch (e) {
+    const error = reduceError2(e);
+    const body = JSON.stringify(error);
+    const headers = {
+      "Content-Type": "application/json",
+      "MF-Experimental-Error-Stack": "true"
+    };
+    const encoded = encodeURIComponent(body);
+    if (encoded.length <= 8192) {
+      headers["MF-Experimental-Error-Stack-Payload"] = encoded;
+    }
+    return new Response(body, { status: 500, headers });
+  }
+}, "jsonError");
+var middleware_miniflare3_json_error_default2 = jsonError2;
+
+// .wrangler/tmp/bundle-67GwRZ/middleware-insertion-facade.js
+var __INTERNAL_WRANGLER_MIDDLEWARE__2 = [
+  middleware_ensure_req_body_drained_default2,
+  middleware_miniflare3_json_error_default2
+];
+var middleware_insertion_facade_default2 = middleware_loader_entry_default;
+
+// ../../../home/sandbox/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/middleware/common.ts
+var __facade_middleware__2 = [];
+function __facade_register__2(...args) {
+  __facade_middleware__2.push(...args.flat());
+}
+__name(__facade_register__2, "__facade_register__");
+function __facade_invokeChain__2(request, env, ctx, dispatch, middlewareChain) {
+  const [head, ...tail] = middlewareChain;
+  const middlewareCtx = {
+    dispatch,
+    next(newRequest, newEnv) {
+      return __facade_invokeChain__2(newRequest, newEnv, ctx, dispatch, tail);
+    }
+  };
+  return head(request, env, ctx, middlewareCtx);
+}
+__name(__facade_invokeChain__2, "__facade_invokeChain__");
+function __facade_invoke__2(request, env, ctx, dispatch, finalMiddleware) {
+  return __facade_invokeChain__2(request, env, ctx, dispatch, [
+    ...__facade_middleware__2,
+    finalMiddleware
+  ]);
+}
+__name(__facade_invoke__2, "__facade_invoke__");
+
+// .wrangler/tmp/bundle-67GwRZ/middleware-loader.entry.ts
+var __Facade_ScheduledController__2 = class ___Facade_ScheduledController__2 {
+  constructor(scheduledTime, cron, noRetry) {
+    this.scheduledTime = scheduledTime;
+    this.cron = cron;
+    this.#noRetry = noRetry;
+  }
+  scheduledTime;
+  cron;
+  static {
+    __name(this, "__Facade_ScheduledController__");
+  }
+  #noRetry;
+  noRetry() {
+    if (!(this instanceof ___Facade_ScheduledController__2)) {
+      throw new TypeError("Illegal invocation");
+    }
+    this.#noRetry();
+  }
 };
-//# sourceMappingURL=functionsWorker-0.5387008027661588.mjs.map
+function wrapExportedHandler2(worker) {
+  if (__INTERNAL_WRANGLER_MIDDLEWARE__2 === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__2.length === 0) {
+    return worker;
+  }
+  for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__2) {
+    __facade_register__2(middleware);
+  }
+  const fetchDispatcher = /* @__PURE__ */ __name(function(request, env, ctx) {
+    if (worker.fetch === void 0) {
+      throw new Error("Handler does not export a fetch() function.");
+    }
+    return worker.fetch(request, env, ctx);
+  }, "fetchDispatcher");
+  return {
+    ...worker,
+    fetch(request, env, ctx) {
+      const dispatcher = /* @__PURE__ */ __name(function(type, init) {
+        if (type === "scheduled" && worker.scheduled !== void 0) {
+          const controller = new __Facade_ScheduledController__2(
+            Date.now(),
+            init.cron ?? "",
+            () => {
+            }
+          );
+          return worker.scheduled(controller, env, ctx);
+        }
+      }, "dispatcher");
+      return __facade_invoke__2(request, env, ctx, dispatcher, fetchDispatcher);
+    }
+  };
+}
+__name(wrapExportedHandler2, "wrapExportedHandler");
+function wrapWorkerEntrypoint2(klass) {
+  if (__INTERNAL_WRANGLER_MIDDLEWARE__2 === void 0 || __INTERNAL_WRANGLER_MIDDLEWARE__2.length === 0) {
+    return klass;
+  }
+  for (const middleware of __INTERNAL_WRANGLER_MIDDLEWARE__2) {
+    __facade_register__2(middleware);
+  }
+  return class extends klass {
+    #fetchDispatcher = /* @__PURE__ */ __name((request, env, ctx) => {
+      this.env = env;
+      this.ctx = ctx;
+      if (super.fetch === void 0) {
+        throw new Error("Entrypoint class does not define a fetch() function.");
+      }
+      return super.fetch(request);
+    }, "#fetchDispatcher");
+    #dispatcher = /* @__PURE__ */ __name((type, init) => {
+      if (type === "scheduled" && super.scheduled !== void 0) {
+        const controller = new __Facade_ScheduledController__2(
+          Date.now(),
+          init.cron ?? "",
+          () => {
+          }
+        );
+        return super.scheduled(controller);
+      }
+    }, "#dispatcher");
+    fetch(request) {
+      return __facade_invoke__2(
+        request,
+        this.env,
+        this.ctx,
+        this.#dispatcher,
+        this.#fetchDispatcher
+      );
+    }
+  };
+}
+__name(wrapWorkerEntrypoint2, "wrapWorkerEntrypoint");
+var WRAPPED_ENTRY2;
+if (typeof middleware_insertion_facade_default2 === "object") {
+  WRAPPED_ENTRY2 = wrapExportedHandler2(middleware_insertion_facade_default2);
+} else if (typeof middleware_insertion_facade_default2 === "function") {
+  WRAPPED_ENTRY2 = wrapWorkerEntrypoint2(middleware_insertion_facade_default2);
+}
+var middleware_loader_entry_default2 = WRAPPED_ENTRY2;
+export {
+  __INTERNAL_WRANGLER_MIDDLEWARE__2 as __INTERNAL_WRANGLER_MIDDLEWARE__,
+  middleware_loader_entry_default2 as default
+};
+//# sourceMappingURL=functionsWorker-0.6353353692448014.js.map

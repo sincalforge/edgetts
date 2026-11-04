@@ -6,7 +6,8 @@
   <meta name="theme-color" content="#040a14" />
   <meta name="description" content="免费在线文字转语音 - 74 种语言、318 种声音，可调语速音调音量，自动生成 SRT/VTT 字幕" />
   <title>Edge TTS · Voice Studio</title>
-  <script src="https://unpkg.com/lucide@1.67.0/dist/umd/lucide.min.js"></script>
+  <script src="/js/vendor/lucide.min.js"></script>
+  <link rel="manifest" href="/manifest.webmanifest" />
   <style>
     :root {
       color-scheme: dark;
@@ -60,6 +61,8 @@
       border: 1px solid var(--line); background: var(--card); color: var(--muted); font-size: 12px; }
     .pill b { color: var(--text); font-weight: 650; }
     .pill.live { color: #a8f5cf; border-color: #65e5a633; }
+    .pill.live.off { color: #ffd38a; border-color: #ffd38a44; }
+    .pill.live.off i { background: #ffb547; box-shadow: 0 0 12px #ffb547; }
     .pill.live i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
 
     /* studio */
@@ -173,6 +176,27 @@
       border: 2px solid var(--cyan); box-shadow: 0 0 10px #6de9ff66; cursor: pointer; }
     input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 2px solid var(--cyan); cursor: pointer; }
 
+
+    /* engine */
+    .engine-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: 11px; background: #030a15c9; border: 1px solid var(--line); }
+    .engine-btn { padding: 7px; border-radius: 8px; font-size: 13px; color: var(--muted); transition: .15s; }
+    .engine-btn.active { background: #a996ff22; color: var(--violet); }
+    .engine-hint { margin: 10px 0 0; color: var(--dim); font-size: 12px; line-height: 1.6; }
+    .offline-card { margin-top: 12px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
+    .offline-card .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .offline-card #offline-status { flex: 1 1 100%; font-size: 12px; color: var(--muted); }
+    .btn-mini { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9px; font-size: 12px; font-weight: 650;
+      background: #a996ff1f; color: var(--violet); border: 1px solid #a996ff44; }
+    .btn-mini:hover { filter: brightness(1.15); }
+    .btn-mini[hidden] { display: none; }
+    .btn-mini.danger { background: transparent; color: var(--dim); border-color: var(--line); }
+    .btn-mini.danger:hover { color: var(--red); border-color: #ff8a8a55; }
+    .offline-card .progress { margin-top: 10px; }
+    body.mode-offline .voice-panel .panel-body { opacity: .45; }
+    body.mode-offline #pitch-row { opacity: .4; pointer-events: none; }
+    .only-offline { display: none; }
+    body.mode-offline .only-offline { display: inline; }
+
     /* links */
     .links { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 22px; }
     .link { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 14px;
@@ -213,7 +237,7 @@
       <div class="stats">
         <span class="pill"><b id="total-langs">74</b> 种语言</span>
         <span class="pill"><b id="total-voices">318</b> 个声音</span>
-        <span class="pill live"><i></i> 服务在线</span>
+        <span class="pill live" id="net-pill"><i></i> 在线</span>
       </div>
     </header>
 
@@ -246,7 +270,7 @@
       </section>
 
       <aside class="side">
-        <section class="panel">
+        <section class="panel voice-panel">
           <div class="panel-head">
             <h2><i data-lucide="mic-vocal"></i> 声音</h2>
             <span class="muted" id="voice-count">—</span>
@@ -276,6 +300,28 @@
 
         <section class="panel">
           <div class="panel-head">
+            <h2><i data-lucide="wifi-off"></i> 引擎</h2>
+          </div>
+          <div class="panel-body">
+            <div class="engine-seg" role="tablist" aria-label="合成引擎">
+              <button type="button" class="engine-btn" data-e="auto">自动</button>
+              <button type="button" class="engine-btn" data-e="online">在线</button>
+              <button type="button" class="engine-btn" data-e="offline">离线</button>
+            </div>
+            <p class="engine-hint">自动：有网用 Edge 在线声音，断网或在线失败时改用本地离线引擎。离线引擎为 Matcha 中英文女声，输出 WAV，不支持调音调。</p>
+            <div class="offline-card">
+              <div class="row">
+                <span id="offline-status">检测中…</span>
+                <button type="button" class="btn-mini" id="offline-action" hidden></button>
+                <button type="button" class="btn-mini danger" id="offline-delete" hidden><i data-lucide="trash-2"></i> 删除</button>
+              </div>
+              <div class="progress"><span id="offline-bar"></span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
             <h2><i data-lucide="sliders-horizontal"></i> 参数</h2>
             <button type="button" class="tool-btn" id="reset-params"><i data-lucide="rotate-ccw"></i> 重置</button>
           </div>
@@ -284,8 +330,8 @@
               <div class="range-head"><span>语速</span><span class="range-val" id="rate-label">1x</span></div>
               <input type="range" id="rate-slider" min="50" max="300" step="5" value="100" aria-label="语速" />
             </div>
-            <div class="range">
-              <div class="range-head"><span>音调</span><span class="range-val" id="pitch-label">+0 Hz</span></div>
+            <div class="range" id="pitch-row">
+              <div class="range-head"><span>音调 <span class="only-offline muted">（离线不支持）</span></span><span class="range-val" id="pitch-label">+0 Hz</span></div>
               <input type="range" id="pitch-slider" min="-50" max="50" step="1" value="0" aria-label="音调" />
             </div>
             <div class="range">
@@ -331,7 +377,7 @@
         </nav>
     <footer class="footer">
       <span>Powered by Cloudflare Pages · Functions</span>
-      <span>设置自动保存在本机浏览器</span>
+      <span>设置自动保存在本机 · 离线模型由 sherpa-onnx 提供（Apache-2.0）</span>
     </footer>
   </div>
 

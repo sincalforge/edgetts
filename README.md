@@ -85,3 +85,17 @@ edge-tts-cf/
 - 原站：https://edge-tts.com
 - Python 版：https://github.com/rany2/edge-tts
 - 微软 Edge Read Aloud 服务
+
+## 离线朗读（断网可用）
+
+页面右侧“引擎”可选 **自动 / 在线 / 离线**：
+
+- **在线**：Edge 神经语音（经 `/api/tts` 代理），输出 MP3。
+- **离线**：浏览器本地运行 [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) WebAssembly + Matcha 中英文模型（`matcha-icefall-zh-en`，女声），输出 WAV，带按句 SRT/VTT 字幕。首次需下载约 138 MB，之后保存在浏览器 Cache Storage，断网也能读任意文字。不支持调音调。
+- **自动**（默认）：有网用在线；断网或在线请求失败时，如已下载离线模型则自动改用离线。
+
+实现说明：
+
+- `offline/v1/`：sherpa-onnx 2.0.1 预编译 wasm 运行时（Apache-2.0）与 `tts-worker.js`；模型数据拆成 6 个 ≤22 MB 分片放在 `offline/v1/model/`（Cloudflare Pages 单文件上限 25 MiB），由 Worker 下载、拼接并缓存。
+- `sw.js`：Service Worker 缓存页面本身，断网时也能打开站点。
+- 更换模型时请改用新目录（如 `offline/v2/`）并同步修改 `js/offline-tts.js`、`offline/*/tts-worker.js` 中的缓存名。

@@ -1,0 +1,35 @@
+{
+ "version": "matcha-icefall-zh-en@sherpa-onnx-2.0.1",
+ "size": 131238616,
+ "sha256": "c8faa4aad950886c44316e79492b8d595c3f4ec8cc096b0c5adc36ab69e8aa76",
+ "parts": [
+  {
+   "name": "model-00.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-01.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-02.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-03.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-04.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-05.bin",
+   "size": 15895256
+  }
+ ],
+ "wasm": {
+  "name": "sherpa-onnx-wasm-main-tts.wasm",
+  "size": 13740219
+ }
+}

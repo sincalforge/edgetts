@@ -1,5 +1,6 @@
 import { EdgeTTS, createVTT, createSRT } from "./edge-tts.js";
 import voices from "./voices.js";
+import { OfflineEngine, OFFLINE_VOICE, splitSentences, cuesToSRT, cuesToVTT } from "./offline-tts.js";
 
 const STORE_KEY = "edgetts.settings.v2";
 const CHUNK_LIMIT = 1500; // 后端单次上限 3000，留余量
@@ -40,7 +41,7 @@ const sortedLangs = Object.keys(voices).sort((a, b) => {
 // ---------- state ----------
 const defaults = {
   lang: "zh", gender: "all", voice: "zh-CN-XiaoxiaoNeural",
-  rate: 100, pitch: 0, volume: 0, autoPlay: true, text: "",
+  rate: 100, pitch: 0, volume: 0, autoPlay: true, text: "", engine: "auto",
 };
 let state = { ...defaults };
 try { Object.assign(state, JSON.parse(localStorage.getItem(STORE_KEY) || "{}")); } catch {}
@@ -253,52 +254,165 @@ function splitText(text) {
   return chunks.map((c) => c.trim()).filter(Boolean);
 }
 
+// ---------- offline engine ----------
+const offline = new OfflineEngine();
+const offlineStatus = $("offline-status");
+const offlineAction = $("offline-action");
+const offlineDelete = $("offline-delete");
+const offlineBar = $("offline-bar");
+const netPill = $("net-pill");
+let offlineCached = false;
+const mb = (n) => (n / 1048576).toFixed(0) + " MB";
+
+function setOfflineUI(text, { action = null, del = false, progress = null } = {}) {
+  offlineStatus.textContent = text;
+  offlineAction.hidden = !action;
+  if (action) offlineAction.innerHTML = action;
+  offlineDelete.hidden = !del;
+  offlineBar.parentElement.classList.toggle("on", progress != null);
+  offlineBar.style.width = progress == null ? "0" : `${Math.round(progress * 100)}%`;
+  icons();
+}
+
+async function refreshOffline() {
+  if (!offline.supported) { setOfflineUI("当前浏览器不支持离线引擎"); return; }
+  const st = await offline.status();
+  offlineCached = st.cached;
+  if (offline.ready) setOfflineUI(`已就绪 · ${OFFLINE_VOICE.name}`, { del: true });
+  else if (st.cached) setOfflineUI(`已下载（${mb(st.size)}），断网可用`, { action: '<i data-lucide="cpu"></i> 预加载', del: true });
+  else {
+    const size = await offline.manifestSize();
+    setOfflineUI("未下载。下载一次后，断网也能朗读任意文字。", { action: `<i data-lucide="download"></i> 下载离线模型${size ? "（" + mb(size) + "）" : ""}` });
+  }
+}
+
+offline.onProgress = (p) => {
+  if (p.phase === "download") setOfflineUI(`下载中 ${mb(p.loaded)} / ${mb(p.total)}`, { progress: p.loaded / p.total });
+  else if (p.phase === "init") setOfflineUI("正在初始化离线引擎…", { progress: 1 });
+};
+
+async function loadOffline() {
+  try {
+    await offline.load();
+    offlineCached = true;
+  } finally {
+    refreshOffline();
+  }
+}
+
+offlineAction.addEventListener("click", () => loadOffline().catch((e) => setStatus(e.message, "err")));
+offlineDelete.addEventListener("click", async () => {
+  if (!confirm("删除已下载的离线模型？删除后需联网重新下载。")) return;
+  await offline.remove();
+  offlineCached = false;
+  refreshOffline();
+  setStatus("离线模型已删除", "ok");
+});
+
+function syncEngineUI() {
+  document.querySelectorAll(".engine-btn").forEach((b) => b.classList.toggle("active", b.dataset.e === state.engine));
+  document.body.classList.toggle("mode-offline", state.engine === "offline");
+}
+document.querySelectorAll(".engine-btn").forEach((b) =>
+  b.addEventListener("click", () => { state.engine = b.dataset.e; save(); syncEngineUI(); })
+);
+
+function syncNet() {
+  const on = navigator.onLine;
+  netPill.classList.toggle("off", !on);
+  netPill.lastChild.textContent = on ? " 在线" : " 离线";
+}
+window.addEventListener("online", syncNet);
+window.addEventListener("offline", syncNet);
+
 // ---------- generate ----------
 const history = [];
 let busy = false;
+
+async function synthOnline(text, onPct) {
+  const chunks = splitText(text);
+  const opts = { rate: signed(state.rate - 100, "%"), pitch: signed(state.pitch, "Hz"), volume: signed(state.volume, "%") };
+  const blobs = [];
+  const subtitle = [];
+  let offset = 0;
+  for (let i = 0; i < chunks.length; i++) {
+    setStatus(chunks.length > 1 ? `正在合成第 ${i + 1} / ${chunks.length} 段…` : "正在合成…");
+    const { audio, subtitle: sub } = await new EdgeTTS(chunks[i], state.voice, opts).synthesize();
+    sub.forEach((b) => subtitle.push({ ...b, Offset: b.Offset + offset }));
+    offset += Math.round((audio.size / MP3_BYTES_PER_SEC) * 1e7);
+    blobs.push(audio);
+    onPct((i + 1) / chunks.length);
+  }
+  const audio = new Blob(blobs, { type: "audio/mpeg" });
+  const v = allVoices.find((x) => x.name === state.voice);
+  return {
+    audio, ext: "mp3", engine: "在线",
+    voice: v ? v.chracter : state.voice,
+    vtt: createVTT(subtitle, text), srt: createSRT(subtitle, text),
+    seconds: audio.size / MP3_BYTES_PER_SEC,
+  };
+}
+
+async function synthOffline(text, onPct) {
+  const sentences = splitSentences(text);
+  if (!sentences.length) throw new Error("没有可朗读的文字");
+  if (!offline.ready) setStatus(offlineCached ? "正在加载离线引擎…" : "首次使用，正在下载离线模型…");
+  await loadOffline();
+  setStatus("离线合成中…");
+  const { audio, cues, duration } = await offline.synthesize(
+    sentences,
+    { speed: state.rate / 100, gain: 1 + state.volume / 100 },
+    (done, total) => { setStatus(`离线合成中 ${done} / ${total} 句…`); onPct(done / total); }
+  );
+  return { audio, ext: "wav", engine: "离线", voice: "本地 Matcha", vtt: cuesToVTT(cues), srt: cuesToSRT(cues), seconds: duration };
+}
+
+const isNetworkError = (err) => err instanceof TypeError || /无法连接|Failed to fetch|NetworkError|HTTP 5\d\d/.test(err?.message || "");
 
 async function generate() {
   if (busy) return;
   const text = textInput.value.trim();
   if (!text) { setStatus("请输入要转换的文字", "err"); textInput.focus(); return; }
-  if (!state.voice) { setStatus("请选择声音", "err"); return; }
 
   busy = true;
   generateBtn.disabled = true;
   generateBtn.innerHTML = `<span class="spinner"></span> 生成中…`;
-  const chunks = splitText(text);
-  const opts = { rate: signed(state.rate - 100, "%"), pitch: signed(state.pitch, "Hz"), volume: signed(state.volume, "%") };
   setProgress(0);
 
   try {
-    const blobs = [];
-    const subtitle = [];
-    let offset = 0;
-    for (let i = 0; i < chunks.length; i++) {
-      setStatus(chunks.length > 1 ? `正在合成第 ${i + 1} / ${chunks.length} 段…` : "正在合成…");
-      const { audio, subtitle: sub } = await new EdgeTTS(chunks[i], state.voice, opts).synthesize();
-      sub.forEach((b) => subtitle.push({ ...b, Offset: b.Offset + offset }));
-      offset += Math.round((audio.size / MP3_BYTES_PER_SEC) * 1e7);
-      blobs.push(audio);
-      setProgress((i + 1) / chunks.length);
+    let r;
+    const useOffline = state.engine === "offline" || (state.engine === "auto" && !navigator.onLine);
+    if (useOffline) {
+      if (!offlineCached && !navigator.onLine) throw new Error("当前离线，且尚未下载离线模型。请联网后在“离线引擎”里下载一次。");
+      r = await synthOffline(text, setProgress);
+    } else {
+      if (!state.voice) throw new Error("请选择声音");
+      try {
+        r = await synthOnline(text, setProgress);
+      } catch (err) {
+        if (state.engine === "auto" && offlineCached && isNetworkError(err)) {
+          setStatus("在线服务不可用，已切换到离线引擎…");
+          setProgress(0);
+          r = await synthOffline(text, setProgress);
+        } else throw err;
+      }
     }
-    const audio = new Blob(blobs, { type: "audio/mpeg" });
-    const v = allVoices.find((x) => x.name === state.voice);
+
     const entry = {
       id: Date.now(),
-      voice: v ? v.chracter : state.voice,
+      voice: r.voice, engine: r.engine, ext: r.ext,
       snippet: text.slice(0, 40),
       ts: new Date().toISOString().slice(0, 19).replace(/[-:T]/g, ""),
-      audioUrl: URL.createObjectURL(audio),
-      vttUrl: URL.createObjectURL(new Blob([createVTT(subtitle, text)], { type: "text/vtt" })),
-      srtUrl: URL.createObjectURL(new Blob([createSRT(subtitle, text)], { type: "text/plain" })),
-      size: audio.size,
+      audioUrl: URL.createObjectURL(r.audio),
+      vttUrl: URL.createObjectURL(new Blob([r.vtt], { type: "text/vtt" })),
+      srtUrl: URL.createObjectURL(new Blob([r.srt], { type: "text/plain" })),
+      size: r.audio.size,
     };
     history.unshift(entry);
     history.splice(HISTORY_MAX).forEach((h) => [h.audioUrl, h.vttUrl, h.srtUrl].forEach(URL.revokeObjectURL));
     showResult(entry);
     renderHistory();
-    setStatus(`生成完成 · ${(entry.size / 1024).toFixed(0)} KB · 约 ${Math.round(entry.size / MP3_BYTES_PER_SEC)} 秒`, "ok");
+    setStatus(`${r.engine}生成完成 · ${(entry.size / 1024).toFixed(0)} KB · 约 ${Math.round(r.seconds)} 秒`, "ok");
   } catch (err) {
     console.error(err);
     audioPanel.innerHTML = `<p class="placeholder err">生成失败：${esc(err.message || "请检查网络后重试")}</p>`;
@@ -317,7 +431,7 @@ function showResult(e, play = state.autoPlay) {
   audioPanel.innerHTML = `
     <audio controls id="result-audio" src="${e.audioUrl}"></audio>
     <div class="dl-row">
-      <a class="dl-btn dl-mp3" href="${e.audioUrl}" download="edge-tts-${e.ts}.mp3"><i data-lucide="download"></i> MP3</a>
+      <a class="dl-btn dl-mp3" href="${e.audioUrl}" download="edge-tts-${e.ts}.${e.ext}"><i data-lucide="download"></i> ${e.ext.toUpperCase()}</a>
       <a class="dl-btn dl-srt" href="${e.srtUrl}" download="edge-tts-${e.ts}.srt"><i data-lucide="captions"></i> SRT</a>
       <a class="dl-btn dl-vtt" href="${e.vttUrl}" download="edge-tts-${e.ts}.vtt"><i data-lucide="file-text"></i> VTT</a>
     </div>`;
@@ -332,7 +446,7 @@ function renderHistory() {
       <button type="button" class="history-item" data-id="${h.id}">
         <i data-lucide="play-circle"></i>
         <span class="h-text">${esc(h.snippet)}${h.snippet.length >= 40 ? "…" : ""}</span>
-        <span class="h-meta">${esc(h.voice)} · ${h.ts.slice(8, 10)}:${h.ts.slice(10, 12)}</span>
+        <span class="h-meta">${esc(h.engine)} · ${esc(h.voice)} · ${h.ts.slice(8, 10)}:${h.ts.slice(10, 12)}</span>
       </button>`)
     .join("");
   icons();
@@ -344,6 +458,10 @@ historyList.addEventListener("click", (e) => {
 });
 
 // ---------- init ----------
+syncEngineUI();
+syncNet();
+refreshOffline();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
 populateLangs();
 document.querySelectorAll(".gender-btn").forEach((b) => b.classList.toggle("active", b.dataset.g === state.gender));
 autoPlayCb.checked = state.autoPlay;

@@ -1,0 +1,11 @@
+{
+  "name": "Edge TTS · Voice Studio",
+  "short_name": "Edge TTS",
+  "description": "在线 Edge 神经语音 + 本地离线朗读",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050b16",
+  "theme_color": "#050b16",
+  "lang": "zh-CN",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
