@@ -91,11 +91,15 @@ edge-tts-cf/
 页面右侧“引擎”可选 **自动 / 在线 / 离线**：
 
 - **在线**：Edge 神经语音（经 `/api/tts` 代理），输出 MP3。
-- **离线**：浏览器本地运行 [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) WebAssembly + Matcha 中英文模型（`matcha-icefall-zh-en`，女声），输出 WAV，带按句 SRT/VTT 字幕。首次需下载约 138 MB，之后保存在浏览器 Cache Storage，断网也能读任意文字。不支持调音调。
+- **离线**：浏览器本地运行 [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) WebAssembly，输出 WAV，带按句 SRT/VTT 字幕，不支持调音调。可选两个模型包，各自下载一次后保存在浏览器 Cache Storage，断网也能读任意文字：
+  - **Kokoro 中英 · 4 声**（默认，约 216 MB）：[Kokoro-82M v1.1-zh](https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh) FP16，24 kHz，晴岚、若溪（女）与云舟、景澈（男）。浏览器包来自 [haixin/timeline-studio-voice-models](https://huggingface.co/haixin/timeline-studio-voice-models)（Apache-2.0）。
+  - **Matcha 中英 · 女声**（约 138 MB）：`matcha-icefall-zh-en`，16 kHz，体积更小、合成更快。
 - **自动**（默认）：有网用在线；断网或在线请求失败时，如已下载离线模型则自动改用离线。
 
 实现说明：
 
-- `offline/v1/`：sherpa-onnx 2.0.1 预编译 wasm 运行时（Apache-2.0）与 `tts-worker.js`；模型数据拆成 6 个 ≤22 MB 分片放在 `offline/v1/model/`（Cloudflare Pages 单文件上限 25 MiB），由 Worker 下载、拼接并缓存。
+- `offline/tts-worker.js`：通用离线 Worker，通过 Worker name（`<目录>|<缓存名>`）指定模型包。
+- `offline/v1/`：Matcha 包，sherpa-onnx 2.0.1 预编译 wasm 运行时（Apache-2.0）；模型数据拆成 6 个 ≤22 MB 分片放在 `model/`（Cloudflare Pages 单文件上限 25 MiB）。
+- `offline/kokoro-v1/`：Kokoro 四声包（运行时、10 个 ≤22 MB 分片、试听样音、`LICENSE`、`SOURCE.md`）。
 - `sw.js`：Service Worker 缓存页面本身，断网时也能打开站点。
-- 更换模型时请改用新目录（如 `offline/v2/`）并同步修改 `js/offline-tts.js`、`offline/*/tts-worker.js` 中的缓存名。
+- 模型包登记在 `js/offline-tts.js` 的 `PACKS`。更换或升级模型时请改用新目录与新缓存名。

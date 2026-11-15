@@ -192,6 +192,19 @@
     .btn-mini.danger { background: transparent; color: var(--dim); border-color: var(--line); }
     .btn-mini.danger:hover { color: var(--red); border-color: #ff8a8a55; }
     .offline-card .progress { margin-top: 10px; }
+    .pack-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+    .pack-btn { text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: #030a15c9; color: var(--muted); font-size: 12px; line-height: 1.45; transition: .15s; }
+    .pack-btn b { display: block; font-size: 13px; color: var(--text, #e8eefc); }
+    .pack-btn small { color: var(--dim); }
+    .pack-btn .tag { float: right; font-size: 10px; padding: 1px 6px; border-radius: 6px; background: #5ee6a51f; color: #5ee6a5; }
+    .pack-btn.active { border-color: #a996ff88; background: #a996ff18; }
+    .ovoices { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin-bottom: 10px; }
+    .ovoice { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 6px 6px 6px 10px; border-radius: 9px; border: 1px solid var(--line); font-size: 13px; color: var(--muted); cursor: pointer; transition: .15s; }
+    .ovoice small { color: var(--dim); font-size: 11px; margin-left: 4px; }
+    .ovoice.active { border-color: #a996ff88; color: var(--violet); background: #a996ff18; }
+    .ovoice .play { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; color: var(--dim); }
+    .ovoice .play:hover { color: var(--violet); background: #a996ff22; }
+    .ovoice .play svg { width: 14px; height: 14px; }
     body.mode-offline .voice-panel .panel-body { opacity: .45; }
     body.mode-offline #pitch-row { opacity: .4; pointer-events: none; }
     .only-offline { display: none; }
@@ -308,8 +321,10 @@
               <button type="button" class="engine-btn" data-e="online">在线</button>
               <button type="button" class="engine-btn" data-e="offline">离线</button>
             </div>
-            <p class="engine-hint">自动：有网用 Edge 在线声音，断网或在线失败时改用本地离线引擎。离线引擎为 Matcha 中英文女声，输出 WAV，不支持调音调。</p>
+            <p class="engine-hint">自动：有网用 Edge 在线声音，断网或在线失败时改用本地离线引擎。离线引擎在浏览器里运行，输出 WAV，不支持调音调。</p>
             <div class="offline-card">
+              <div class="pack-seg" id="pack-seg" role="radiogroup" aria-label="离线模型"></div>
+              <div class="ovoices" id="offline-voices" role="radiogroup" aria-label="离线声音"></div>
               <div class="row">
                 <span id="offline-status">检测中…</span>
                 <button type="button" class="btn-mini" id="offline-action" hidden></button>

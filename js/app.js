@@ -1,6 +1,6 @@
 import { EdgeTTS, createVTT, createSRT } from "./edge-tts.js";
 import voices from "./voices.js";
-import { OfflineEngine, OFFLINE_VOICE, splitSentences, cuesToSRT, cuesToVTT } from "./offline-tts.js";
+import { OfflineEngine, PACKS, DEFAULT_PACK, sampleUrl, splitSentences, cuesToSRT, cuesToVTT } from "./offline-tts.js";
 
 const STORE_KEY = "edgetts.settings.v2";
 const CHUNK_LIMIT = 1500; // 后端单次上限 3000，留余量
@@ -42,10 +42,12 @@ const sortedLangs = Object.keys(voices).sort((a, b) => {
 const defaults = {
   lang: "zh", gender: "all", voice: "zh-CN-XiaoxiaoNeural",
   rate: 100, pitch: 0, volume: 0, autoPlay: true, text: "", engine: "auto",
+  offlinePack: DEFAULT_PACK, offlineSid: 0,
 };
 let state = { ...defaults };
 try { Object.assign(state, JSON.parse(localStorage.getItem(STORE_KEY) || "{}")); } catch {}
 if (!voices[state.lang]) state.lang = "zh";
+if (!PACKS[state.offlinePack]) state.offlinePack = DEFAULT_PACK;
 const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} };
 
 // ---------- dom ----------
@@ -255,14 +257,20 @@ function splitText(text) {
 }
 
 // ---------- offline engine ----------
-const offline = new OfflineEngine();
+const engines = {};
+const getEngine = (id) => (engines[id] ||= new OfflineEngine(id));
 const offlineStatus = $("offline-status");
 const offlineAction = $("offline-action");
 const offlineDelete = $("offline-delete");
 const offlineBar = $("offline-bar");
+const packSeg = $("pack-seg");
+const offlineVoicesEl = $("offline-voices");
 const netPill = $("net-pill");
-let offlineCached = false;
+const cachedPacks = new Set();
 const mb = (n) => (n / 1048576).toFixed(0) + " MB";
+const curPack = () => PACKS[state.offlinePack];
+const curOfflineVoice = () => curPack().voices.find((v) => v.sid === state.offlineSid) || curPack().voices[0];
+let offlineCached = false; // 是否至少有一个模型包已完整下载
 
 function setOfflineUI(text, { action = null, del = false, progress = null } = {}) {
   offlineStatus.textContent = text;
@@ -274,37 +282,92 @@ function setOfflineUI(text, { action = null, del = false, progress = null } = {}
   icons();
 }
 
+function renderPacks() {
+  packSeg.innerHTML = Object.values(PACKS).map((p) => `
+    <button type="button" class="pack-btn${p.id === state.offlinePack ? " active" : ""}" data-p="${p.id}" role="radio" aria-checked="${p.id === state.offlinePack}">
+      ${cachedPacks.has(p.id) ? '<span class="tag">已下载</span>' : ""}<b>${esc(p.name)}</b><small>${esc(p.desc)}</small>
+    </button>`).join("");
+  const pack = curPack();
+  offlineVoicesEl.innerHTML = pack.voices.map((v) => `
+    <div class="ovoice${v.sid === curOfflineVoice().sid ? " active" : ""}" data-sid="${v.sid}" role="radio" tabindex="0" aria-checked="${v.sid === curOfflineVoice().sid}">
+      <span>${esc(v.name)}<small>${v.gender}</small></span>
+      ${v.sample ? `<button type="button" class="play" data-sample="${v.sid}" title="试听"><i data-lucide="play"></i></button>` : ""}
+    </div>`).join("");
+  icons();
+}
+
+packSeg.addEventListener("click", (e) => {
+  const b = e.target.closest(".pack-btn");
+  if (!b || b.dataset.p === state.offlinePack) return;
+  // 切换模型包时释放另一个包占用的内存
+  Object.values(engines).forEach((en) => { if (en.pack.id !== b.dataset.p && en.ready) en.unload(); });
+  state.offlinePack = b.dataset.p;
+  state.offlineSid = PACKS[b.dataset.p].voices[0].sid;
+  save();
+  renderPacks();
+  refreshOffline();
+});
+
+let sampleAudio = null;
+offlineVoicesEl.addEventListener("click", (e) => {
+  const playBtn = e.target.closest(".play");
+  const item = e.target.closest(".ovoice");
+  if (!item) return;
+  const v = curPack().voices.find((x) => String(x.sid) === item.dataset.sid);
+  if (playBtn) {
+    e.stopPropagation();
+    sampleAudio?.pause();
+    sampleAudio = new Audio(sampleUrl(state.offlinePack, v));
+    sampleAudio.play().catch(() => setStatus("试听需要联网（样音未缓存）", "err"));
+  }
+  state.offlineSid = v.sid;
+  save();
+  renderPacks();
+});
+offlineVoicesEl.addEventListener("keydown", (e) => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("ovoice")) { e.preventDefault(); e.target.click(); }
+});
+
 async function refreshOffline() {
-  if (!offline.supported) { setOfflineUI("当前浏览器不支持离线引擎"); return; }
-  const st = await offline.status();
-  offlineCached = st.cached;
-  if (offline.ready) setOfflineUI(`已就绪 · ${OFFLINE_VOICE.name}`, { del: true });
+  const eng = getEngine(state.offlinePack);
+  if (!eng.supported) { setOfflineUI("当前浏览器不支持离线引擎"); return; }
+  const sts = await Promise.all(Object.keys(PACKS).map(async (id) => [id, await getEngine(id).status()]));
+  cachedPacks.clear();
+  sts.forEach(([id, st]) => st.cached && cachedPacks.add(id));
+  offlineCached = cachedPacks.size > 0;
+  renderPacks();
+  const st = Object.fromEntries(sts)[state.offlinePack];
+  if (eng.ready) setOfflineUI(`已就绪 · ${curPack().name}`, { del: true });
   else if (st.cached) setOfflineUI(`已下载（${mb(st.size)}），断网可用`, { action: '<i data-lucide="cpu"></i> 预加载', del: true });
   else {
-    const size = await offline.manifestSize();
-    setOfflineUI("未下载。下载一次后，断网也能朗读任意文字。", { action: `<i data-lucide="download"></i> 下载离线模型${size ? "（" + mb(size) + "）" : ""}` });
+    const size = await eng.manifestSize();
+    setOfflineUI("未下载。下载一次后，断网也能朗读任意文字。", { action: `<i data-lucide="download"></i> 下载${curPack().short}模型${size ? "（" + mb(size) + "）" : ""}` });
   }
 }
 
-offline.onProgress = (p) => {
-  if (p.phase === "download") setOfflineUI(`下载中 ${mb(p.loaded)} / ${mb(p.total)}`, { progress: p.loaded / p.total });
-  else if (p.phase === "init") setOfflineUI("正在初始化离线引擎…", { progress: 1 });
-};
+function attachProgress(eng) {
+  eng.onProgress = (p) => {
+    if (eng.pack.id !== state.offlinePack) return;
+    if (p.phase === "download") setOfflineUI(`下载中 ${mb(p.loaded)} / ${mb(p.total)}`, { progress: p.loaded / p.total });
+    else if (p.phase === "init") setOfflineUI("正在初始化离线引擎…", { progress: 1 });
+  };
+}
 
-async function loadOffline() {
+async function loadOffline(packId = state.offlinePack) {
+  const eng = getEngine(packId);
+  attachProgress(eng);
   try {
-    await offline.load();
-    offlineCached = true;
+    await eng.load();
   } finally {
     refreshOffline();
   }
+  return eng;
 }
 
 offlineAction.addEventListener("click", () => loadOffline().catch((e) => setStatus(e.message, "err")));
 offlineDelete.addEventListener("click", async () => {
-  if (!confirm("删除已下载的离线模型？删除后需联网重新下载。")) return;
-  await offline.remove();
-  offlineCached = false;
+  if (!confirm(`删除已下载的 ${curPack().name} 模型？删除后需联网重新下载。`)) return;
+  await getEngine(state.offlinePack).remove();
   refreshOffline();
   setStatus("离线模型已删除", "ok");
 });
@@ -356,15 +419,22 @@ async function synthOnline(text, onPct) {
 async function synthOffline(text, onPct) {
   const sentences = splitSentences(text);
   if (!sentences.length) throw new Error("没有可朗读的文字");
-  if (!offline.ready) setStatus(offlineCached ? "正在加载离线引擎…" : "首次使用，正在下载离线模型…");
-  await loadOffline();
+  // 选中的模型包没下载、又没网时，退回到已下载的那个包
+  let packId = state.offlinePack;
+  if (!cachedPacks.has(packId) && !navigator.onLine && cachedPacks.size) packId = [...cachedPacks][0];
+  const pack = PACKS[packId];
+  const voice = packId === state.offlinePack ? curOfflineVoice() : pack.voices[0];
+  const eng = getEngine(packId);
+  if (!eng.ready) setStatus(cachedPacks.has(packId) ? "正在加载离线引擎…" : "首次使用，正在下载离线模型…");
+  await loadOffline(packId);
   setStatus("离线合成中…");
-  const { audio, cues, duration } = await offline.synthesize(
+  const { audio, cues, duration } = await eng.synthesize(
     sentences,
-    { speed: state.rate / 100, gain: 1 + state.volume / 100 },
+    { speed: state.rate / 100, gain: 1 + state.volume / 100, sid: voice.sid },
     (done, total) => { setStatus(`离线合成中 ${done} / ${total} 句…`); onPct(done / total); }
   );
-  return { audio, ext: "wav", engine: "离线", voice: "本地 Matcha", vtt: cuesToVTT(cues), srt: cuesToSRT(cues), seconds: duration };
+  const voiceName = pack.voices.length > 1 ? `${pack.short} ${voice.name}` : `本地 ${pack.short}`;
+  return { audio, ext: "wav", engine: "离线", voice: voiceName, vtt: cuesToVTT(cues), srt: cuesToSRT(cues), seconds: duration };
 }
 
 const isNetworkError = (err) => err instanceof TypeError || /无法连接|Failed to fetch|NetworkError|HTTP 5\d\d/.test(err?.message || "");

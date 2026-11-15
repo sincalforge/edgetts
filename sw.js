@@ -1,9 +1,9 @@
-/* 页面离线缓存：界面文件走“网络优先，失败用缓存”，离线模型（/offline/v1/）走缓存优先。 */
-const SHELL_CACHE = "edgetts-shell-v1";
+/* 页面离线缓存：界面文件走“网络优先，失败用缓存”，离线模型（/offline/<包>/ 的模型分片与运行时）走缓存优先。 */
+const SHELL_CACHE = "edgetts-shell-v2";
 const SHELL = [
   "/", "/index.html", "/manifest.webmanifest", "/icon.svg",
   "/js/app.js", "/js/edge-tts.js", "/js/voices.js", "/js/offline-tts.js", "/js/vendor/lucide.min.js",
-  "/offline/v1/tts-worker.js",
+  "/offline/tts-worker.js",
 ];
 
 self.addEventListener("install", (e) => {
@@ -23,7 +23,7 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
 
-  if (url.pathname.startsWith("/offline/v1/") && url.pathname !== "/offline/v1/tts-worker.js") {
+  if (/^\/offline\/[^/]+\/(model\/|sherpa-onnx-)/.test(url.pathname)) {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req)));
     return;
   }

@@ -1,10 +1,14 @@
 /*
- * 离线 TTS Worker：sherpa-onnx (WebAssembly) + Matcha 中英文模型。
+ * 离线 TTS Worker：sherpa-onnx (WebAssembly)。一个 Worker 只服务一个模型包：
+ *   new Worker("tts-worker.js", { name: "<目录名>|<Cache Storage 名>" })
+ * （用 Worker name 传参：离线时脚本来自缓存，URL 上的查询参数会丢失）
  * 模型数据被拆成多个 <25 MiB 的分片（Cloudflare Pages 单文件上限），
  * 首次下载后存入 Cache Storage，之后断网也能直接从缓存加载。
  */
-const CACHE_NAME = "edgetts-offline-v1";
-const BASE = new URL("./", self.location.href).href;
+const [packName, cacheName] = String(self.name || "").split("|");
+const PACK = (packName || "v1").replace(/[^\w.-]/g, "");
+const CACHE_NAME = cacheName || "edgetts-offline-v1";
+const BASE = new URL(`./${PACK}/`, self.location.href).href;
 const MODEL_BASE = BASE + "model/";
 
 let tts = null;
@@ -66,6 +70,10 @@ async function load() {
     if (off !== manifest.size) throw new Error("模型文件不完整，请删除后重新下载");
 
     post({ type: "progress", phase: "init" });
+    // 运行时初始化与 sherpa-onnx-tts.js 加载谁先完成都有可能，两者都就绪后再创建引擎
+    let runtimeReady, scriptsReady;
+    const runtimeP = new Promise((res) => (runtimeReady = res));
+    const scriptsP = new Promise((res) => (scriptsReady = res));
     await new Promise((resolve, reject) => {
       self.Module = {
         wasmBinary,
@@ -73,17 +81,14 @@ async function load() {
         getPreloadedPackage: () => data.buffer,
         setStatus: () => {},
         onAbort: (what) => reject(new Error("离线引擎初始化失败：" + what)),
-        onRuntimeInitialized() {
-          try {
-            tts = createOfflineTts(self.Module);
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        },
+        onRuntimeInitialized: () => runtimeReady(),
       };
+      Promise.all([runtimeP, scriptsP])
+        .then(() => { tts = createOfflineTts(self.Module); resolve(); })
+        .catch(reject);
       loadScriptCached(BASE + "sherpa-onnx-wasm-main-tts.js")
         .then(() => loadScriptCached(BASE + "sherpa-onnx-tts.js"))
+        .then(() => scriptsReady())
         .catch(reject);
     });
   })();
@@ -95,14 +100,14 @@ async function load() {
   }
 }
 
-function generate({ id, sentences, speed }) {
+function generate({ id, sentences, speed, sid }) {
   const parts = [];
   const cues = [];
   let sampleRate = tts.sampleRate;
   let t = 0;
   for (let i = 0; i < sentences.length; i++) {
     const text = sentences[i];
-    const audio = tts.generate({ text, sid: 0, speed: speed || 1.0 });
+    const audio = tts.generate({ text, sid: sid || 0, speed: speed || 1.0 });
     sampleRate = audio.sampleRate || sampleRate;
     const gap = Math.round(sampleRate * 0.12);
     const dur = audio.samples.length / sampleRate;

@@ -1,0 +1,82 @@
+{
+ "version": "kokoro-multi-lang-v1_1-fp16-4voices@timeline-studio (sherpa-onnx 6897144)",
+ "size": 212733356,
+ "sha256": "48b5b1fd4a3e4f4cec65140d345c6e15682bdacdf2c3397c81f8d11bc74fb86e",
+ "parts": [
+  {
+   "name": "model-00.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-01.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-02.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-03.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-04.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-05.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-06.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-07.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-08.bin",
+   "size": 23068672
+  },
+  {
+   "name": "model-09.bin",
+   "size": 5115308
+  }
+ ],
+ "wasm": {
+  "name": "sherpa-onnx-wasm-main-tts.wasm",
+  "size": 13472083
+ },
+ "sampleRate": 24000,
+ "voices": [
+  {
+   "sid": 0,
+   "id": "zh_f_qinglan",
+   "name": "晴岚",
+   "gender": "female",
+   "upstream": "zf_001"
+  },
+  {
+   "sid": 1,
+   "id": "zh_f_ruoxi",
+   "name": "若溪",
+   "gender": "female",
+   "upstream": "zf_073"
+  },
+  {
+   "sid": 2,
+   "id": "zh_m_yunzhou",
+   "name": "云舟",
+   "gender": "male",
+   "upstream": "zm_009"
+  },
+  {
+   "sid": 3,
+   "id": "zh_m_jingche",
+   "name": "景澈",
+   "gender": "male",
+   "upstream": "zm_010"
+  }
+ ]
+}

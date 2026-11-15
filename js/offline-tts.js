@@ -1,18 +1,43 @@
 /**
- * 离线引擎（sherpa-onnx WebAssembly，Matcha 中英文女声）主线程封装。
- * 首次使用需下载约 140 MB 模型，之后保存在浏览器 Cache Storage，断网可用。
+ * 离线引擎（sherpa-onnx WebAssembly）主线程封装。
+ * 每个模型包首次使用需下载一次，之后保存在浏览器 Cache Storage，断网可用。
+ * 更换/升级模型包时请用新目录和新缓存名，避免旧缓存与新文件混用。
  */
-const CACHE_NAME = "edgetts-offline-v1";
-const BASE = new URL("../offline/v1/", import.meta.url).href;
-const MANIFEST_URL = BASE + "model/manifest.json";
+const OFFLINE_ROOT = new URL("../offline/", import.meta.url).href;
 
-export const OFFLINE_VOICE = {
-  name: "本地 · Matcha 中英文女声",
-  id: "sherpa-onnx/matcha-icefall-zh-en",
+export const PACKS = {
+  kokoro: {
+    id: "kokoro",
+    dir: "kokoro-v1",
+    cache: "edgetts-offline-kokoro-v1",
+    name: "Kokoro · 4 声",
+    short: "Kokoro",
+    desc: "中英文，更自然，2 女 2 男",
+    voices: [
+      { sid: 0, name: "晴岚", gender: "女", sample: "samples/zh_f_qinglan.mp3" },
+      { sid: 1, name: "若溪", gender: "女", sample: "samples/zh_f_ruoxi.mp3" },
+      { sid: 2, name: "云舟", gender: "男", sample: "samples/zh_m_yunzhou.mp3" },
+      { sid: 3, name: "景澈", gender: "男", sample: "samples/zh_m_jingche.mp3" },
+    ],
+  },
+  matcha: {
+    id: "matcha",
+    dir: "v1",
+    cache: "edgetts-offline-v1",
+    name: "Matcha · 女声",
+    short: "Matcha",
+    desc: "中英文，更小更快，1 女",
+    voices: [{ sid: 0, name: "女声", gender: "女" }],
+  },
 };
+export const DEFAULT_PACK = "kokoro";
+export const sampleUrl = (pack, v) => (v.sample ? OFFLINE_ROOT + PACKS[pack].dir + "/" + v.sample : null);
 
 export class OfflineEngine {
-  constructor() {
+  constructor(packId = DEFAULT_PACK) {
+    this.pack = PACKS[packId] || PACKS[DEFAULT_PACK];
+    this.base = OFFLINE_ROOT + this.pack.dir + "/";
+    this.manifestUrl = this.base + "model/manifest.json";
     this.worker = null;
     this.ready = false;
     this.loadPromise = null;
@@ -29,11 +54,12 @@ export class OfflineEngine {
   async status() {
     if (!this.supported) return { supported: false, cached: false, size: 0 };
     try {
-      const cache = await caches.open(CACHE_NAME);
-      const mRes = await cache.match(MANIFEST_URL);
+      if (!(await caches.has(this.pack.cache))) return { supported: true, cached: false, size: 0 };
+      const cache = await caches.open(this.pack.cache);
+      const mRes = await cache.match(this.manifestUrl);
       if (!mRes) return { supported: true, cached: false, size: 0 };
       const m = await mRes.json();
-      const urls = [BASE + m.wasm.name, ...m.parts.map((p) => BASE + "model/" + p.name)];
+      const urls = [this.base + m.wasm.name, ...m.parts.map((p) => this.base + "model/" + p.name)];
       const hits = await Promise.all(urls.map((u) => cache.match(u)));
       return { supported: true, cached: hits.every(Boolean), size: m.size + m.wasm.size };
     } catch {
@@ -43,7 +69,7 @@ export class OfflineEngine {
 
   async manifestSize() {
     try {
-      const m = await (await fetch(MANIFEST_URL)).json();
+      const m = await (await fetch(this.manifestUrl)).json();
       return m.size + m.wasm.size;
     } catch {
       return 0;
@@ -52,7 +78,7 @@ export class OfflineEngine {
 
   _ensureWorker() {
     if (this.worker) return;
-    this.worker = new Worker(BASE + "tts-worker.js");
+    this.worker = new Worker(OFFLINE_ROOT + "tts-worker.js", { name: `${this.pack.dir}|${this.pack.cache}` });
     this.worker.onmessage = (e) => {
       const msg = e.data;
       if (msg.type === "progress") this.onProgress?.(msg);
@@ -107,15 +133,23 @@ export class OfflineEngine {
    * @param {string[]} sentences 已切分的句子
    * @returns {Promise<{audio: Blob, cues: {start:number,end:number,text:string}[], duration:number}>}
    */
-  async synthesize(sentences, { speed = 1, gain = 1 } = {}, onProgress) {
+  async synthesize(sentences, { speed = 1, gain = 1, sid = 0 } = {}, onProgress) {
     await this.load();
     const id = ++this.seq;
     const msg = await new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject, onProgress });
-      this.worker.postMessage({ type: "generate", id, sentences, speed });
+      this.worker.postMessage({ type: "generate", id, sentences, speed, sid });
     });
     const audio = encodeWav(msg.samples, msg.sampleRate, gain);
     return { audio, cues: msg.cues, duration: msg.samples.length / msg.sampleRate };
+  }
+
+  /** 释放 Worker（切换模型包时回收内存，缓存保留） */
+  unload() {
+    if (this.worker) this.worker.terminate();
+    this.worker = null;
+    this.ready = false;
+    this.loadPromise = null;
   }
 
   async remove() {
@@ -123,7 +157,7 @@ export class OfflineEngine {
     this.worker = null;
     this.ready = false;
     this.loadPromise = null;
-    await caches.delete(CACHE_NAME);
+    await caches.delete(this.pack.cache);
   }
 }
 

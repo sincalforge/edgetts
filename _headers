@@ -15,3 +15,13 @@
 /offline/v1/*.wasm
   Content-Type: application/wasm
   Cache-Control: public, max-age=31536000, immutable
+
+/offline/kokoro-v1/model/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/offline/kokoro-v1/*.wasm
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
+
+/offline/tts-worker.js
+  Cache-Control: public, max-age=0, must-revalidate
