@@ -69,7 +69,10 @@
     .pill.live i { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
 
     /* studio */
-    .studio { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+    .studio { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+    .main-col { display: grid; gap: 16px; min-width: 0; }
+    .sub-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .sub-grid > .panel { min-width: 0; }
     .panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
       box-shadow: var(--shadow); backdrop-filter: blur(10px); }
     .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px;
@@ -88,7 +91,7 @@
     textarea, select, input[type=search] {
       width: 100%; border: 1px solid var(--line); outline: 0; background: #030a15c9; transition: .2s;
     }
-    textarea { min-height: 300px; padding: 16px; border-radius: 14px; resize: vertical; line-height: 1.8; font-size: 15px; }
+    textarea { min-height: 260px; padding: 16px; border-radius: 14px; resize: vertical; line-height: 1.8; font-size: 15px; }
     textarea::placeholder, input::placeholder { color: #5b7090; }
     select, input[type=search] { padding: 10px 12px; border-radius: 11px; font-size: 13px; }
     textarea:focus, select:focus, input[type=search]:focus { border-color: #6de9ff66; box-shadow: 0 0 0 4px #6de9ff10; }
@@ -137,7 +140,7 @@
     .h-meta { color: var(--dim); font-size: 11px; white-space: nowrap; }
 
     /* sidebar */
-    .side { display: grid; gap: 16px; position: sticky; top: 16px; }
+    .side { display: grid; gap: 16px; position: sticky; top: 16px; min-width: 0; }
     .field { display: grid; gap: 8px; }
     .field + .field { margin-top: 12px; }
     .search-wrap { position: relative; }
@@ -146,7 +149,7 @@
     .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: 11px; background: #030a15c9; border: 1px solid var(--line); }
     .gender-btn { padding: 7px; border-radius: 8px; font-size: 13px; color: var(--muted); transition: .15s; }
     .gender-btn.active { background: #6de9ff1a; color: var(--cyan); }
-    .voice-list { display: grid; gap: 4px; max-height: 300px; overflow-y: auto; margin: 0 -6px; padding: 2px 6px; scrollbar-width: thin; }
+    .voice-list { display: grid; gap: 4px; max-height: clamp(300px, calc(100vh - 400px), 640px); overflow-y: auto; margin: 0 -6px; padding: 2px 6px; scrollbar-width: thin; }
     .voice-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 11px; cursor: pointer;
       border: 1px solid transparent; transition: .12s; }
     .voice-item:hover { background: #ffffff08; }
@@ -201,7 +204,7 @@
     .pack-btn small { color: var(--dim); }
     .pack-btn .tag { float: right; font-size: 10px; padding: 1px 6px; border-radius: 6px; background: #5ee6a51f; color: #5ee6a5; }
     .pack-btn.active { border-color: #a996ff88; background: #a996ff18; }
-    .ovoices { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin-bottom: 10px; }
+    .ovoices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
     .ovoice { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 6px 6px 6px 10px; border-radius: 9px; border: 1px solid var(--line); font-size: 13px; color: var(--muted); cursor: pointer; transition: .15s; }
     .ovoice small { color: var(--dim); font-size: 11px; margin-left: 4px; }
     .ovoice.active { border-color: #a996ff88; color: var(--violet); background: #a996ff18; }
@@ -224,19 +227,45 @@
     .link .arrow { position: absolute; top: 14px; right: 12px; color: var(--dim); width: 14px; height: 14px; }
     .footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; color: var(--dim); font-size: 11px; letter-spacing: .06em; }
 
+    @media (max-width: 1180px) {
+      .sub-grid { grid-template-columns: 1fr; }
+    }
     @media (max-width: 1000px) {
-      .studio { grid-template-columns: 1fr; }
-      .side { position: static; }
+      .studio { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas: "text text" "voice voice" "engine param"; align-items: start; }
+      .main-col, .sub-grid { display: contents; }
+      .text-panel { grid-area: text; }
+      .side { grid-area: voice; position: static; }
+      .engine-panel { grid-area: engine; }
+      .param-panel { grid-area: param; }
+      .voice-list { max-height: 320px; }
       .links { grid-template-columns: repeat(3, 1fr); }
     }
+    @media (max-width: 700px) {
+      .studio { grid-template-columns: minmax(0, 1fr); grid-template-areas: "text" "voice" "engine" "param"; gap: 12px; }
+    }
     @media (max-width: 600px) {
-      .top { flex-direction: column; align-items: flex-start; }
-      textarea { min-height: 220px; }
-      #char-count { width: 100%; text-align: right; }
-      .editor-foot .btn-primary { width: 100%; }
+      .shell { width: min(100% - 20px, 1200px); padding: 14px 0 calc(96px + env(safe-area-inset-bottom)); }
+      .top { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+      .brand p { font-size: 11.5px; }
+      .pill { padding: 5px 10px; }
+      .panel-head { padding: 12px 14px; }
+      .panel-head > div { flex-wrap: nowrap; }
+      .panel-body { padding: 14px; }
+      .tool-btn { padding: 6px 8px; }
+      textarea { min-height: 200px; padding: 14px; }
+      .voice-list { max-height: 260px; }
+      .editor-foot { position: fixed; z-index: 20; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom));
+        margin: 0; padding: 10px 10px 10px 14px; border-radius: 16px; border: 1px solid var(--line-2);
+        background: rgba(8, 17, 32, 0.92); backdrop-filter: blur(14px); box-shadow: 0 12px 40px #000a; flex-wrap: nowrap; }
+      .editor-foot .switch { font-size: 12px; white-space: nowrap; }
+      .editor-foot .btn-primary { flex: 1; max-width: 220px; padding: 12px 16px; }
       .btn-primary kbd { display: none; }
-      .links { grid-template-columns: repeat(2, 1fr); }
-      .footer { flex-direction: column; }
+      .result { margin-top: 12px; }
+      .links { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
+      .link { flex-direction: row; align-items: center; gap: 10px; padding: 10px 12px; }
+      .link p, .link .arrow { display: none; }
+      .footer { flex-direction: column; gap: 4px; letter-spacing: .02em; }
     }
   </style>
 </head>
@@ -258,32 +287,79 @@
     </header>
 
     <main class="studio">
-      <section class="panel">
-        <div class="panel-head">
-          <h2><i data-lucide="file-pen-line"></i> 文本</h2>
-          <div>
-            <span class="muted" id="char-count">0 字</span>
-            <button type="button" class="tool-btn" id="sample-text"><i data-lucide="wand-sparkles"></i> 示例</button>
-            <button type="button" class="tool-btn" id="clear-text"><i data-lucide="eraser"></i> 清空</button>
+      <div class="main-col">
+        <section class="panel text-panel">
+          <div class="panel-head">
+            <h2><i data-lucide="file-pen-line"></i> 文本</h2>
+            <div>
+              <span class="muted" id="char-count">0 字</span>
+              <button type="button" class="tool-btn" id="sample-text"><i data-lucide="wand-sparkles"></i> 示例</button>
+              <button type="button" class="tool-btn" id="clear-text"><i data-lucide="eraser"></i> 清空</button>
+            </div>
           </div>
+          <div class="panel-body">
+            <textarea id="text-input" placeholder="在此输入或粘贴要朗读的文字，长文本会自动分段合成…"></textarea>
+            <div class="editor-foot">
+              <label class="switch"><input type="checkbox" id="auto-play" checked /> 生成后自动播放</label>
+              <button type="button" class="btn-primary" id="generate-btn"><i data-lucide="sparkles"></i> 生成音频 <kbd>Ctrl ↵</kbd></button>
+            </div>
+            <div class="progress"><span id="progress-bar"></span></div>
+            <div class="result" id="audio-panel">
+              <p class="placeholder">生成的音频与字幕会出现在这里</p>
+            </div>
+            <div class="status" id="status" role="status" aria-live="polite"></div>
+            <div class="history" id="history-box" hidden>
+              <h3>本次生成记录</h3>
+              <div class="history-list" id="history-list"></div>
+            </div>
+          </div>
+        </section>
+        <div class="sub-grid">
+          <section class="panel engine-panel">
+            <div class="panel-head">
+              <h2><i data-lucide="wifi-off"></i> 引擎</h2>
+            </div>
+            <div class="panel-body">
+              <div class="engine-seg" role="tablist" aria-label="合成引擎">
+                <button type="button" class="engine-btn" data-e="auto">自动</button>
+                <button type="button" class="engine-btn" data-e="online">在线</button>
+                <button type="button" class="engine-btn" data-e="offline">离线</button>
+              </div>
+              <p class="engine-hint">自动：有网用 Edge 在线声音，断网或在线失败时改用本地离线引擎。离线引擎在浏览器里运行，输出 WAV，不支持调音调。</p>
+              <div class="offline-card">
+                <div class="pack-seg" id="pack-seg" role="radiogroup" aria-label="离线模型"></div>
+                <div class="ovoices" id="offline-voices" role="radiogroup" aria-label="离线声音"></div>
+                <div class="row">
+                  <span id="offline-status">检测中…</span>
+                  <button type="button" class="btn-mini" id="offline-action" hidden></button>
+                  <button type="button" class="btn-mini danger" id="offline-delete" hidden><i data-lucide="trash-2"></i> 删除</button>
+                </div>
+                <div class="progress"><span id="offline-bar"></span></div>
+              </div>
+            </div>
+          </section>
+          <section class="panel param-panel">
+            <div class="panel-head">
+              <h2><i data-lucide="sliders-horizontal"></i> 参数</h2>
+              <button type="button" class="tool-btn" id="reset-params"><i data-lucide="rotate-ccw"></i> 重置</button>
+            </div>
+            <div class="panel-body">
+              <div class="range">
+                <div class="range-head"><span>语速</span><span class="range-val" id="rate-label">1x</span></div>
+                <input type="range" id="rate-slider" min="50" max="300" step="5" value="100" aria-label="语速" />
+              </div>
+              <div class="range" id="pitch-row">
+                <div class="range-head"><span>音调 <span class="only-offline muted">（离线不支持）</span></span><span class="range-val" id="pitch-label">+0 Hz</span></div>
+                <input type="range" id="pitch-slider" min="-50" max="50" step="1" value="0" aria-label="音调" />
+              </div>
+              <div class="range">
+                <div class="range-head"><span>音量</span><span class="range-val" id="volume-label">+0%</span></div>
+                <input type="range" id="volume-slider" min="-50" max="50" step="5" value="0" aria-label="音量" />
+              </div>
+            </div>
+          </section>
         </div>
-        <div class="panel-body">
-          <textarea id="text-input" placeholder="在此输入或粘贴要朗读的文字，长文本会自动分段合成…"></textarea>
-          <div class="editor-foot">
-            <label class="switch"><input type="checkbox" id="auto-play" checked /> 生成后自动播放</label>
-            <button type="button" class="btn-primary" id="generate-btn"><i data-lucide="sparkles"></i> 生成音频 <kbd>Ctrl ↵</kbd></button>
-          </div>
-          <div class="progress"><span id="progress-bar"></span></div>
-          <div class="result" id="audio-panel">
-            <p class="placeholder">生成的音频与字幕会出现在这里</p>
-          </div>
-          <div class="status" id="status" role="status" aria-live="polite"></div>
-          <div class="history" id="history-box" hidden>
-            <h3>本次生成记录</h3>
-            <div class="history-list" id="history-list"></div>
-          </div>
-        </div>
-      </section>
+      </div>
 
       <aside class="side">
         <section class="panel voice-panel">
@@ -310,51 +386,6 @@
             <div class="current">
               <div><b id="current-voice-label">—</b><code id="current-voice-id"></code></div>
               <button type="button" class="tool-btn" id="copy-voice" title="复制声音 ID"><i data-lucide="copy"></i></button>
-            </div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <h2><i data-lucide="wifi-off"></i> 引擎</h2>
-          </div>
-          <div class="panel-body">
-            <div class="engine-seg" role="tablist" aria-label="合成引擎">
-              <button type="button" class="engine-btn" data-e="auto">自动</button>
-              <button type="button" class="engine-btn" data-e="online">在线</button>
-              <button type="button" class="engine-btn" data-e="offline">离线</button>
-            </div>
-            <p class="engine-hint">自动：有网用 Edge 在线声音，断网或在线失败时改用本地离线引擎。离线引擎在浏览器里运行，输出 WAV，不支持调音调。</p>
-            <div class="offline-card">
-              <div class="pack-seg" id="pack-seg" role="radiogroup" aria-label="离线模型"></div>
-              <div class="ovoices" id="offline-voices" role="radiogroup" aria-label="离线声音"></div>
-              <div class="row">
-                <span id="offline-status">检测中…</span>
-                <button type="button" class="btn-mini" id="offline-action" hidden></button>
-                <button type="button" class="btn-mini danger" id="offline-delete" hidden><i data-lucide="trash-2"></i> 删除</button>
-              </div>
-              <div class="progress"><span id="offline-bar"></span></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-head">
-            <h2><i data-lucide="sliders-horizontal"></i> 参数</h2>
-            <button type="button" class="tool-btn" id="reset-params"><i data-lucide="rotate-ccw"></i> 重置</button>
-          </div>
-          <div class="panel-body">
-            <div class="range">
-              <div class="range-head"><span>语速</span><span class="range-val" id="rate-label">1x</span></div>
-              <input type="range" id="rate-slider" min="50" max="300" step="5" value="100" aria-label="语速" />
-            </div>
-            <div class="range" id="pitch-row">
-              <div class="range-head"><span>音调 <span class="only-offline muted">（离线不支持）</span></span><span class="range-val" id="pitch-label">+0 Hz</span></div>
-              <input type="range" id="pitch-slider" min="-50" max="50" step="1" value="0" aria-label="音调" />
-            </div>
-            <div class="range">
-              <div class="range-head"><span>音量</span><span class="range-val" id="volume-label">+0%</span></div>
-              <input type="range" id="volume-slider" min="-50" max="50" step="5" value="0" aria-label="音量" />
             </div>
           </div>
         </section>
@@ -392,7 +423,7 @@
             <span><h3>WebSSH</h3><p>通过浏览器连接远程终端</p></span>
             <i data-lucide="arrow-up-right" class="arrow"></i>
           </a>
-        </nav>
+    </nav>
     <footer class="footer">
       <span>Powered by Cloudflare Pages · Functions</span>
       <span>设置自动保存在本机 · 离线模型由 sherpa-onnx 提供（Apache-2.0）</span>

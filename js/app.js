@@ -448,6 +448,7 @@ async function generate() {
   generateBtn.disabled = true;
   generateBtn.innerHTML = `<span class="spinner"></span> 生成中…`;
   setProgress(0);
+  if (matchMedia("(max-width: 600px)").matches) audioPanel.scrollIntoView({ block: "center", behavior: "smooth" });
 
   try {
     let r;
