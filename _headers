@@ -25,3 +25,9 @@
 
 /offline/tts-worker.js
   Cache-Control: public, max-age=0, must-revalidate
+
+/icons/*
+  Cache-Control: public, max-age=86400
+
+/favicon.ico
+  Cache-Control: public, max-age=86400

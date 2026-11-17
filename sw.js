@@ -1,7 +1,7 @@
 /* 页面离线缓存：界面文件走“网络优先，失败用缓存”，离线模型（/offline/<包>/ 的模型分片与运行时）走缓存优先。 */
-const SHELL_CACHE = "edgetts-shell-v2";
+const SHELL_CACHE = "edgetts-shell-v3";
 const SHELL = [
-  "/", "/index.html", "/manifest.webmanifest", "/icon.svg",
+  "/", "/index.html", "/manifest.webmanifest", "/icon.svg", "/favicon.ico", "/icons/favicon.svg", "/icons/icon-192.png", "/icons/apple-touch-icon.png",
   "/js/app.js", "/js/edge-tts.js", "/js/voices.js", "/js/offline-tts.js", "/js/vendor/lucide.min.js",
   "/offline/tts-worker.js",
 ];
